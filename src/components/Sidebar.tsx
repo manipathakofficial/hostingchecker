@@ -51,7 +51,7 @@ const Sidebar = () => {
       <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
         <h3 className="text-lg font-bold text-slate-900 mb-6">Recent from Blog</h3>
         <div className="space-y-6">
-          {posts.map((post, i) => (
+          {Array.isArray(posts) && posts.map((post, i) => (
             <a key={i} href={post.link} target="_blank" rel="noopener noreferrer" className="group block">
               <h4 className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2 mb-2">
                 {post.title}

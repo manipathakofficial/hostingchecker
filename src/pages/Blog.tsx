@@ -42,7 +42,7 @@ const Blog = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {posts.map((post, i) => (
+                {Array.isArray(posts) && posts.map((post, i) => (
                   <article key={i} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl hover:shadow-slate-200/50 transition-all">
                     <div className="p-8 flex-1 space-y-4">
                       <div className="flex items-center gap-2 text-[10px] text-slate-400 uppercase tracking-widest font-bold">

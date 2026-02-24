@@ -149,9 +149,10 @@ const Home = () => {
               )}
             </section>
 
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {result && (
                 <motion.section 
+                  key={result.domain}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-8"
@@ -254,17 +255,25 @@ const Home = () => {
                         <div>
                           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{t('results.nameservers')}</h4>
                           <ul className="space-y-2">
-                            {result.dns.ns.map((ns: string, i: number) => (
-                              <li key={i} className="text-sm font-mono bg-slate-50 p-2 rounded-lg border border-slate-100">{ns}</li>
+                            {Array.isArray(result.dns?.ns) && result.dns.ns.map((ns: any, i: number) => (
+                              <li key={i} className="text-sm font-mono bg-slate-50 p-2 rounded-lg border border-slate-100">{String(ns)}</li>
                             ))}
+                            {(!result.dns?.ns || !Array.isArray(result.dns.ns) || result.dns.ns.length === 0) && (
+                              <li className="text-sm text-slate-400 italic">No records found</li>
+                            )}
                           </ul>
                         </div>
                         <div>
                           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{t('results.mx_records')}</h4>
                           <ul className="space-y-2">
-                            {result.dns.mx.map((mx: any, i: number) => (
-                              <li key={i} className="text-sm font-mono bg-slate-50 p-2 rounded-lg border border-slate-100">{mx.exchange}</li>
+                            {Array.isArray(result.dns?.mx) && result.dns.mx.map((mx: any, i: number) => (
+                              <li key={i} className="text-sm font-mono bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                {mx && typeof mx === 'object' ? (mx.exchange || JSON.stringify(mx)) : String(mx)}
+                              </li>
                             ))}
+                            {(!result.dns?.mx || !Array.isArray(result.dns.mx) || result.dns.mx.length === 0) && (
+                              <li className="text-sm text-slate-400 italic">No records found</li>
+                            )}
                           </ul>
                         </div>
                       </div>

@@ -28,7 +28,8 @@ app.get("/api/lookup", async (req, res) => {
     if (!domain) return res.status(400).json({ error: "Domain is required" });
 
     // Clean domain
-    let cleanDomain = domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
+    let cleanDomain = domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim();
+    if (!cleanDomain) return res.status(400).json({ error: "Invalid domain name" });
 
     // Check cache (1 hour)
     const cached = cache.get(cleanDomain);
@@ -36,10 +37,18 @@ app.get("/api/lookup", async (req, res) => {
       return res.json(cached.data);
     }
 
-    let results: any = null;
+    let results: any = {
+      domain: cleanDomain,
+      dns: { a: [], ns: [], mx: [], txt: [] },
+      ip: null,
+      geo: null,
+      whois: null,
+      headers: null,
+      server: 'Unknown',
+      cms: 'Unknown',
+      ssl: 'Unknown'
+    };
     try {
-      results = { domain: cleanDomain };
-
       // 1. DNS Lookup
       const resolveDns = (type: any) => new Promise((resolve) => {
         dns.resolve(cleanDomain, type, (err, addresses) => {
@@ -137,7 +146,7 @@ app.get("/api/lookup", async (req, res) => {
   app.get("/api/blog", async (req, res) => {
     try {
       const feed = await parser.parseURL("https://webseotrends.com/feed/");
-      res.json(feed.items.slice(0, 6));
+      res.json((feed.items || []).slice(0, 6));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch blog posts" });
     }
