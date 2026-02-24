@@ -47,8 +47,8 @@ const Home = () => {
     try {
       const res = await axios.get(`/api/lookup?domain=${encodeURIComponent(domain)}`);
       setResult(res.data);
-    } catch (err) {
-      setError('Could not fetch data for this domain. Please check the spelling and try again.');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Could not fetch data for this domain. Please check the spelling and try again.');
     } finally {
       setLoading(false);
     }

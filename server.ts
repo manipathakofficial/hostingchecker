@@ -11,24 +11,38 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database("cache.db");
-db.exec(`
-  CREATE TABLE IF NOT EXISTS lookup_cache (
-    domain TEXT PRIMARY KEY,
-    data TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+let db: any;
+try {
+  const dbPath = process.env.NODE_ENV === "production" ? "/tmp/cache.db" : "cache.db";
+  db = new Database(dbPath);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS lookup_cache (
+      domain TEXT PRIMARY KEY,
+      data TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+} catch (e) {
+  console.error("Failed to initialize SQLite, using in-memory cache:", e);
+  db = {
+    prepare: () => ({
+      get: () => null,
+      run: () => {}
+    })
+  };
+}
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
-  const parser = new RSSParser();
+export const app = express();
+const parser = new RSSParser();
 
-  app.use(express.json());
+app.use(express.json());
 
-  // API Routes
-  app.get("/api/lookup", async (req, res) => {
+// API Routes
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", environment: process.env.NODE_ENV });
+});
+
+app.get("/api/lookup", async (req, res) => {
     const domain = req.query.domain as string;
     if (!domain) return res.status(400).json({ error: "Domain is required" });
 
@@ -82,8 +96,9 @@ async function startServer() {
       // 3. WHOIS
       try {
         const whoisData = await whois(cleanDomain);
-        results.whois = whoisData;
+        results.whois = whoisData && Object.keys(whoisData).length > 0 ? whoisData : null;
       } catch (e) {
+        console.warn("WHOIS lookup failed:", e.message);
         results.whois = null;
       }
 
@@ -138,6 +153,9 @@ async function startServer() {
     }
   });
 
+async function startServer() {
+  const PORT = 3000;
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -157,4 +175,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+  startServer();
+}
